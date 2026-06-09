@@ -50,7 +50,7 @@ pipeline {
           fi
           
           echo "Applying Kubernetes deployment..."
-          kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --validate=false
+          kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --insecure-skip-tls-verify --validate=false
           
           IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
           if [ -f image_name.txt ]; then
