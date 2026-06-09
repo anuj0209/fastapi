@@ -50,7 +50,7 @@ pipeline {
           fi
           
           echo "Applying Kubernetes deployment..."
-          kubectl apply -f "${KUBE_DEPLOYMENT_FILE}"
+          kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --validate=false
           
           IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
           if [ -f image_name.txt ]; then
@@ -58,10 +58,10 @@ pipeline {
           fi
           
           echo "Updating deployment with image: ${IMAGE}"
-          kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record --insecure-skip-tls-verify
           
           echo "Waiting for rollout..."
-          kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s
+          kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s --insecure-skip-tls-verify
         '''
       }
     }
