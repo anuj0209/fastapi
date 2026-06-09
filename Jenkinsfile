@@ -43,54 +43,29 @@ pipeline {
     }
     stage('Deploy to Kubernetes') {
       steps {
-        script {
-          if (fileExists('/tmp/kubeconfig-jenkins')) {
-            sh '''
-              export KUBECONFIG="/tmp/kubeconfig-jenkins"
-              echo "Flattening existing kubeconfig to embed TLS credentials..."
-              kubectl config view --flatten --minify --kubeconfig "${KUBECONFIG}" > /tmp/kubeconfig-jenkins.flattened
-              export KUBECONFIG="/tmp/kubeconfig-jenkins.flattened"
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'JENKINS_KUBECONFIG')]) {
+          sh '''
+            export KUBECONFIG="/tmp/kubeconfig-jenkins"
+            cp "${JENKINS_KUBECONFIG}" "${KUBECONFIG}"
 
-              echo "Applying Kubernetes deployment..."
-              kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --insecure-skip-tls-verify --validate=false
+            echo "Flattening kubeconfig to embed TLS credentials..."
+            kubectl config view --flatten --minify --embed-certs --kubeconfig "${KUBECONFIG}" > /tmp/kubeconfig-jenkins.flattened
+            export KUBECONFIG="/tmp/kubeconfig-jenkins.flattened"
 
-              IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
-              if [ -f image_name.txt ]; then
-                IMAGE=$(cat image_name.txt)
-              fi
+            echo "Applying Kubernetes deployment..."
+            kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --insecure-skip-tls-verify --validate=false
 
-              echo "Updating deployment with image: ${IMAGE}"
-              kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record --insecure-skip-tls-verify
+            IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+            if [ -f image_name.txt ]; then
+              IMAGE=$(cat image_name.txt)
+            fi
 
-              echo "Waiting for rollout..."
-              kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s --insecure-skip-tls-verify
-            '''
-          } else {
-            withCredentials([file(credentialsId: 'kubeconfig', variable: 'JENKINS_KUBECONFIG')]) {
-              sh '''
-                export KUBECONFIG="/tmp/kubeconfig-jenkins"
-                cp "${JENKINS_KUBECONFIG}" "${KUBECONFIG}"
+            echo "Updating deployment with image: ${IMAGE}"
+            kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record --insecure-skip-tls-verify
 
-                echo "Flattening kubeconfig to embed TLS credentials..."
-                kubectl config view --flatten --minify --kubeconfig "${KUBECONFIG}" > /tmp/kubeconfig-jenkins.flattened
-                export KUBECONFIG="/tmp/kubeconfig-jenkins.flattened"
-
-                echo "Applying Kubernetes deployment..."
-                kubectl apply -f "${KUBE_DEPLOYMENT_FILE}" --insecure-skip-tls-verify --validate=false
-
-                IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
-                if [ -f image_name.txt ]; then
-                  IMAGE=$(cat image_name.txt)
-                fi
-
-                echo "Updating deployment with image: ${IMAGE}"
-                kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record --insecure-skip-tls-verify
-
-                echo "Waiting for rollout..."
-                kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s --insecure-skip-tls-verify
-              '''
-            }
-          }
+            echo "Waiting for rollout..."
+            kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s --insecure-skip-tls-verify
+          '''
         }
       }
     }
