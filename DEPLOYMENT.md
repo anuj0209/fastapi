@@ -86,7 +86,8 @@ To deploy an update from Jenkins:
 
 1. Configure the Jenkins job to use this repository.
 2. Add a `kubeconfig` file credential in Jenkins and set its credential ID to `kubeconfig`.
-3. Optionally add Docker credentials for pushing images to a registry with credential ID `dockerhub`.
-4. Run the Jenkins pipeline from `Jenkinsfile`.
+3. Ensure the stored kubeconfig uses embedded certificate/key data or otherwise grants the Jenkins agent access to the referenced TLS files. Avoid kubeconfig entries that point to local host paths such as `/home/anuj0209/.minikube/profiles/minikube/client.crt`.
+4. Optionally add Docker credentials for pushing images to a registry with credential ID `dockerhub`.
+5. Run the Jenkins pipeline from `Jenkinsfile`.
 
 If `DOCKER_REGISTRY` is empty, the pipeline will build the image locally and apply the deployment manifest. If `DOCKER_REGISTRY` is set, it will push the tagged image to the registry and update the deployment with the pushed image.
