@@ -43,18 +43,26 @@ pipeline {
     }
     stage('Deploy to Kubernetes') {
       steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-          sh '''
-            export KUBECONFIG="${KUBECONFIG_FILE}"
-            kubectl apply -f "${KUBE_DEPLOYMENT_FILE}"
-            IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
-            if [ -f image_name.txt ]; then
-              IMAGE=$(cat image_name.txt)
-            fi
-            kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record
-            kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s
-          '''
-        }
+        sh '''
+          # Use kubeconfig from /tmp or try to use default
+          if [ -f /tmp/kubeconfig-jenkins ]; then
+            export KUBECONFIG="/tmp/kubeconfig-jenkins"
+          fi
+          
+          echo "Applying Kubernetes deployment..."
+          kubectl apply -f "${KUBE_DEPLOYMENT_FILE}"
+          
+          IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+          if [ -f image_name.txt ]; then
+            IMAGE=$(cat image_name.txt)
+          fi
+          
+          echo "Updating deployment with image: ${IMAGE}"
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}="${IMAGE}" --record
+          
+          echo "Waiting for rollout..."
+          kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=120s
+        '''
       }
     }
   }
