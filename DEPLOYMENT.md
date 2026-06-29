@@ -85,9 +85,9 @@ sudo kubectl logs pod/$(sudo kubectl get pods -l app=model-server -o jsonpath='{
 To deploy an update from Jenkins:
 
 1. Configure the Jenkins job to use this repository.
-2. Add a `kubeconfig` file credential in Jenkins and set its credential ID to `kubeconfig`.
+2. Add a `kubeconfig` file credential in Jenkins and set its credential ID to `kubeconfig` (or override it with the `KUBE_CREDENTIAL_ID` pipeline parameter).
 3. Ensure the stored kubeconfig is flattened and contains embedded TLS data (`certificate-authority-data`, `client-certificate-data`, `client-key-data`). This avoids referencing local paths such as `/home/anuj0209/.minikube/profiles/minikube/client.crt`, which Jenkins cannot access.
 4. Optionally add Docker credentials for pushing images to a registry with credential ID `dockerhub`.
-5. Run the Jenkins pipeline from `Jenkinsfile`.
+5. Run the Jenkins pipeline from `Jenkinsfile`. If you need to skip Kubernetes deployment until credentials are configured, set `SKIP_DEPLOY=true`.
 
 If `DOCKER_REGISTRY` is empty, the pipeline will build the image locally and apply the deployment manifest. If `DOCKER_REGISTRY` is set, it will push the tagged image to the registry and update the deployment with the pushed image.

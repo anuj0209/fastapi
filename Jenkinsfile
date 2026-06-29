@@ -2,6 +2,8 @@ pipeline {
   agent any
   parameters {
     string(name: 'DOCKER_REGISTRY', defaultValue: '', description: 'Optional Docker registry host (e.g. docker.io/username). Leave empty to use local Docker image.')
+    booleanParam(name: 'SKIP_DEPLOY', defaultValue: false, description: 'Skip the Kubernetes deployment stage.')
+    string(name: 'KUBE_CREDENTIAL_ID', defaultValue: 'kubeconfig', description: 'Jenkins credential ID for the kubeconfig file.')
   }
   environment {
     IMAGE_NAME = 'model-server'
@@ -42,8 +44,11 @@ pipeline {
       }
     }
     stage('Deploy to Kubernetes') {
+      when {
+        expression { return !params.SKIP_DEPLOY }
+      }
       steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'JENKINS_KUBECONFIG')]) {
+        withCredentials([file(credentialsId: params.KUBE_CREDENTIAL_ID, variable: 'JENKINS_KUBECONFIG')]) {
           sh '''
             export KUBECONFIG="/tmp/kubeconfig-jenkins"
             cp "${JENKINS_KUBECONFIG}" "${KUBECONFIG}"

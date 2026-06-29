@@ -49,7 +49,8 @@ Troubleshooting notes:
 Jenkins deployment
 
 - Use `Jenkinsfile` to build the image, optionally push it to a Docker registry, and update the Kubernetes deployment.
-- Configure Jenkins with a `kubeconfig` file credential for cluster access, and a Docker credential named `dockerhub` if using a registry.
+- Configure Jenkins with a `kubeconfig` file credential for cluster access using the default credential ID `kubeconfig`.
+- If you cannot add a kubeconfig credential immediately, run the pipeline with `SKIP_DEPLOY=true` so the build still succeeds.
 - Ensure the stored kubeconfig is flattened and contains embedded TLS data (`certificate-authority-data`, `client-certificate-data`, `client-key-data`), not local host file references such as `/home/anuj0209/.minikube/profiles/minikube/client.crt`.
 - If no registry is configured, Jenkins will build the local image and deploy it directly if the Jenkins agent has access to the same Docker environment as the cluster.
 
