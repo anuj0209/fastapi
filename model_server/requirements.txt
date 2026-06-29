@@ -1,5 +1,5 @@
 fastapi==0.95.2
 uvicorn[standard]==0.22.0
 python-multipart==0.0.6
-numpy==1.26.5
+numpy==1.26.4
 # torch is expected to be provided by the base image with CUDA for GPU support
